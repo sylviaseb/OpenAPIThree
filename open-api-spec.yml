@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: ''
+  description: ''
+servers:
+  - url: https://qa.example.com
+  - url: https://prod.example.com 
+
+paths: 
+  /v1/beers:
+    get:
+      summary: Get Beers List
+      description: Get the list of beers
+      tags: 
+        - Beer
+      parameters:
+        - $ref: "#/components/parameters/PageSizeParameter"
+        - $ref: "#/components/parameters/PageNumberParameter"
+      responses:
+        '200':
+          description: List of beers
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/BeerList"
+        '404': 
+          description: Not Found
+    post:
+      summary: Create Beer
+      description: Create Beer Operation
+      tags: 
+        - Beer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Beer'
+      responses:
+        '201': 
+          description: Beer created
+          headers:
+            Location:
+              description: Location of the created Beer
+              schema:
+                type: string
+                format: uri
+                example: "https://example.com/v1/beers/{assignedId}"
+        '404': 
+          description: Bad Request
+        '409': 
+          description: Conflict
+  /v1/beers/{beerId}:
+    delete:
+      summary: Delete Beer
+      description: Delete a beer object by id
+      tags:
+        - Beer
+      parameters:
+        - $ref: "#/components/parameters/BeerIdPathParameter"
+      responses:
+        '200':
+          description: Beer Deleted
+        '404': 
+          description: Not Found
+    get:
+      tags: 
+      - Beer
+      parameters:
+        - $ref: "#/components/parameters/BeerIdPathParameter"
+      responses:
+        '200':
+          description: Found Beer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Beer'
+        '404': 
+          description: Not Found
+    put:
+      summary: Update Beer
+      description: Operation to update a Beer object
+      operationId: updateBeerById
+      tags:
+        - Beer
+      parameters:
+        - $ref: "#/components/parameters/BeerIdPathParameter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Beer"
+      responses:
+        '204': 
+          description: Beer Updated
+        '400': 
+          description: Bad Request
+        '404': 
+          description: Not Found
+        '409':
+          description: Conflict
+  /v1/customers:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/PageSizeParameter"
+        - $ref: "#/components/parameters/PageNumberParameter"
+      responses:
+        '200':
+          description: List of Customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPagedList"
+        '404': 
+          description: Customers Not Found
+components:
+  parameters:
+    BeerIdPathParameter:
+      name: beerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PageNumberParameter:
+      name: pageNumber
+      in: query
+      schema:
+        type: integer
+        default: 1
+        format: int32
+    PageSizeParameter:
+      name: pageSize
+      in: query
+      required: false
+      schema:        
+        type: integer
+        default: 25
+        format: int32  
+  schemas:
+    CustomerPagedList:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/PagedResponse'
+      properties:
+        content:
+          $ref: '#/components/schemas/CustomerList'
+    CustomerList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Customer'
+    Customer:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          format: int32
+    PagedResponse:
+      type: object
+      properties:
+        pageable:
+          $ref: '#/components/schemas/PagedResponse_pageable'
+        totalPages:
+          type: integer
+          format: int32
+        last:
+          type: boolean
+        totalElements:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+        numberOfElements:
+          type: integer
+          format: int32
+        sort:
+          $ref: '#/components/schemas/PagedResponse_pageable_sort'
+        first:
+          type: boolean
+    PagedResponse_pageable_sort:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    PagedResponse_pageable:
+      type: object
+      properties:
+        sort:
+          $ref: '#/components/schemas/PagedResponse_pageable_sort'
+        offset:
+          type: integer
+          format: int32
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    Beer: 
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: Kingfisher
+        style:
+          type: string
+        upc: 
+          type: string
+          enum: 
+            - ALE
+            - PALE_ALE 
+            - IPA 
+            - WHEAT 
+            - LAGER
+        price:
+          type: number
+          format: float
+        quantity:
+          type: integer
+          format: int32
+        brewery:
+          $ref: "#/components/schemas/Brewery"
+    Brewery:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+    BeerList:
+      type: array
+      description: List of beers
+      items:
+        $ref: "#/components/schemas/Beer"
